@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: booking-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: 8080
