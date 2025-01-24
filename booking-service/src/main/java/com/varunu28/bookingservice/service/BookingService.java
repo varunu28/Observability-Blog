@@ -4,6 +4,7 @@ import com.varunu28.bookingservice.dto.BookingResponse;
 import com.varunu28.bookingservice.dto.UuidResponse;
 import com.varunu28.bookingservice.model.Booking;
 import com.varunu28.bookingservice.repository.BookingRepository;
+import io.micrometer.core.annotation.Timed;
 import java.util.Date;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class BookingService {
         this.restTemplate = restTemplate;
     }
 
+    @Timed(value = "booking_create", description = "Time taken to create a booking")
     public BookingResponse createBooking(UUID itemId, UUID customerId, Date startDate, Date endDate) {
         UuidResponse bookingId = restTemplate.getForObject(EXTERNAL_SERVICE_URL, UuidResponse.class);
         if (bookingId == null) {
