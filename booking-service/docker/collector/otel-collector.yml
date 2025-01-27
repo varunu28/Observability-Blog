@@ -1,0 +1,27 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+
+processors:
+  batch:
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+extensions:
+  # Responsible for responding to health checks on behalf of collector
+  health_check:
+  # Fetches collectors performance data
+  pprof:
+  # Serves as HTTP endpoint that provides live debugging data about instrumented application
+  zpages:
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
