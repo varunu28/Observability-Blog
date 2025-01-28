@@ -6,6 +6,8 @@ import com.varunu28.bookingservice.model.Booking;
 import com.varunu28.bookingservice.repository.BookingRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import java.util.Date;
 import java.util.UUID;
 import org.slf4j.MDC;
@@ -22,11 +24,15 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final RestTemplate restTemplate;
     private final MeterRegistry meterRegistry;
+    private final ObservationRegistry observationRegistry;
 
-    public BookingService(BookingRepository bookingRepository, RestTemplate restTemplate, MeterRegistry meterRegistry) {
+    public BookingService(
+        BookingRepository bookingRepository, RestTemplate restTemplate, MeterRegistry meterRegistry,
+        ObservationRegistry observationRegistry) {
         this.bookingRepository = bookingRepository;
         this.restTemplate = restTemplate;
         this.meterRegistry = meterRegistry;
+        this.observationRegistry = observationRegistry;
     }
 
     public BookingResponse createBooking(UUID itemId, UUID customerId, Date startDate, Date endDate) {
@@ -62,12 +68,18 @@ public class BookingService {
     }
 
     private void writeToDatabase(Booking booking) {
+        Observation observation = Observation.createNotStarted("booking_create_db_write", observationRegistry)
+            .lowCardinalityKeyValue("requestId", MDC.get("requestId"))
+            .lowCardinalityKeyValue("bookingId", booking.getId().toString())
+            .lowCardinalityKeyValue("itemId", booking.getItemId().toString())
+            .lowCardinalityKeyValue("customerId", booking.getCustomerId().toString())
+            .start();
         Timer dbWriteTimer = Timer.builder("booking_create_db_write")
             .description("Time taken to write a booking to database")
             .tag("requestId", MDC.get("requestId"))
             .register(meterRegistry);
         dbWriteTimer.record(() -> {
-            bookingRepository.save(booking);
+            observation.observe(() -> bookingRepository.save(booking));
         });
     }
 
