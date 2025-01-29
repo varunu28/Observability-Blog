@@ -1,15 +1,29 @@
 services:
-  postgres:
+  postgres-booking-service:
+    container_name: booking-service-db
     image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_DB=booking-service-database'
       - 'POSTGRES_PASSWORD=postgres'
       - 'POSTGRES_USER=postgres'
     ports:
       - '5432:5432'
     volumes:
-      - ./docker/sql_scripts:/docker-entrypoint-initdb.d
-      - pgdata:/var/lib/postgresql/data
+      - ./docker/sql_scripts/booking_service:/docker-entrypoint-initdb.d
+      - pgdata1:/var/lib/postgresql/data
+
+  postgres-booking-id-service:
+    container_name: booking-id-service-db
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=booking-id-service-database'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5433:5432'
+    volumes:
+      - ./docker/sql_scripts/booking_id_service:/docker-entrypoint-initdb.d
+      - pgdata2:/var/lib/postgresql/data
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.82.0
@@ -64,4 +78,5 @@ services:
       - '9411:9411' # Zipkin UI
 
 volumes:
-  pgdata:
+  pgdata1:
+  pgdata2:
