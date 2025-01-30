@@ -1,6 +1,9 @@
 # Observability Blog
 Code for the blog series exploring various areas of Observability
 
+ - [Observability: A Primer](https://distributed-computing-musings.com/2025/01/observability-a-primer/)
+ - [Observability: Unlocking the Power of Monitoring](https://distributed-computing-musings.com/2025/01/observability-unlocking-the-power-of-monitoring/)
+
 ## How to run?
 Spin up the containers for setting up infrastructure
 `docker compose up -d`
