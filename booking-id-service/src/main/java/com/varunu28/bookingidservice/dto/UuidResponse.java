@@ -1,4 +1,4 @@
-package com.varunu28.bookingservice.dto;
+package com.varunu28.bookingidservice.dto;
 
 import java.util.UUID;
 
@@ -14,3 +14,4 @@ public class UuidResponse {
         this.uuid = uuid;
     }
 }
+

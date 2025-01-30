@@ -1,7 +1,6 @@
 package com.varunu28.bookingservice.service;
 
 import com.varunu28.bookingservice.dto.BookingResponse;
-import com.varunu28.bookingservice.dto.UuidResponse;
 import com.varunu28.bookingservice.model.Booking;
 import com.varunu28.bookingservice.repository.BookingRepository;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -9,15 +8,18 @@ import io.micrometer.core.instrument.Timer;
 import java.util.Date;
 import java.util.UUID;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class BookingService {
 
-    private static final String EXTERNAL_SERVICE_URL = "https://httpbin.org/uuid";
-    public static final String FAILED_TO_GET_BOOKING_ID_FROM_EXTERNAL_SERVICE =
-        "Failed to get booking ID from external service";
+    public static final String FAILED_TO_GET_BOOKING_ID_FROM_BOOKING_ID_SERVICE =
+        "Failed to get booking ID from booking id service";
+
+    @Value("${booking.id.service.url}")
+    private String bookingIdServiceUrl;
 
     private final BookingRepository bookingRepository;
     private final RestTemplate restTemplate;
@@ -38,9 +40,9 @@ public class BookingService {
         BookingResponse bookingResponse;
         try {
             bookingResponse = createBookingTimer.recordCallable(() -> {
-                UuidResponse bookingId = callExternalService();
+                UUID bookingId = callExternalService();
                 Booking booking = new Booking(
-                    bookingId.getUuid(),
+                    bookingId,
                     itemId,
                     customerId,
                     startDate,
@@ -70,21 +72,22 @@ public class BookingService {
         dbWriteTimer.record(() -> bookingRepository.save(booking));
     }
 
-    private UuidResponse callExternalService() {
+    private UUID callExternalService() {
         Timer externalServiceTimer = Timer.builder("booking_create_external_service")
             .tag("requestId", MDC.get("requestId"))
             .description("Time taken to call external service")
             .register(meterRegistry);
-        UuidResponse bookingId;
+        UUID bookingId;
         try {
-            bookingId = externalServiceTimer.recordCallable(() -> restTemplate.getForObject(
-                EXTERNAL_SERVICE_URL,
-                UuidResponse.class));
+            bookingId = externalServiceTimer.recordCallable(() -> restTemplate.postForObject(
+                bookingIdServiceUrl,
+                null,
+                UUID.class));
         } catch (Exception e) {
-            throw new InternalError(FAILED_TO_GET_BOOKING_ID_FROM_EXTERNAL_SERVICE);
+            throw new InternalError(FAILED_TO_GET_BOOKING_ID_FROM_BOOKING_ID_SERVICE);
         }
         if (bookingId == null) {
-            throw new InternalError(FAILED_TO_GET_BOOKING_ID_FROM_EXTERNAL_SERVICE);
+            throw new InternalError(FAILED_TO_GET_BOOKING_ID_FROM_BOOKING_ID_SERVICE);
         }
         return bookingId;
     }
